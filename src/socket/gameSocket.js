@@ -175,6 +175,10 @@ module.exports = (io) => {
       socket.to(roomId).emit('webrtc-ice-candidate', candidate);
     });
 
+    socket.on('voice-status', ({ roomId, isActive }) => {
+      socket.to(roomId).emit('opponent-voice-status', { isActive });
+    });
+
     socket.on('leave-room', () => {
       if (socket.roomId) {
         socket.leave(socket.roomId);
