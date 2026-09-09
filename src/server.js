@@ -9,13 +9,15 @@ const app = express();
 const server = http.createServer(app);
 
 // Allow FRONTEND_URL or default to localhost:3000
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const rawFrontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const cleanUrl = rawFrontendUrl.endsWith('/') ? rawFrontendUrl.slice(0, -1) : rawFrontendUrl;
+const allowedOrigins = [cleanUrl, cleanUrl + '/'];
 
-app.use(cors({ origin: FRONTEND_URL }));
+app.use(cors({ origin: allowedOrigins }));
 
 const io = new Server(server, {
   cors: {
-    origin: FRONTEND_URL,
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });
@@ -37,5 +39,5 @@ const PORT = process.env.PORT || 3001;
 
 server.listen(PORT, () => {
   console.log(`🚀 Suni Chokdi Server running on http://localhost:${PORT}`);
-  console.log(`Accepted Frontend Origin: ${FRONTEND_URL}`);
+  console.log(`Accepted Frontend Origins: ${allowedOrigins.join(', ')}`);
 });
