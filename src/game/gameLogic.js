@@ -8,7 +8,7 @@ const checkWinner = (board) => {
   for (let i = 0; i < winLines.length; i++) {
     const [a, b, c] = winLines[i];
     if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      return board[a]; // 'X' or 'O'
+      return { symbol: board[a], line: [a, b, c] };
     }
   }
   return null;
@@ -19,14 +19,14 @@ const isDraw = (board) => {
 };
 
 const getGameResult = (board) => {
-  const winner = checkWinner(board);
-  if (winner) {
-    return { winner, draw: false };
+  const winData = checkWinner(board);
+  if (winData) {
+    return { winner: winData.symbol, winningLine: winData.line, draw: false };
   }
   if (isDraw(board)) {
-    return { winner: null, draw: true };
+    return { winner: null, winningLine: null, draw: true };
   }
-  return { winner: null, draw: false };
+  return { winner: null, winningLine: null, draw: false };
 };
 
 module.exports = { checkWinner, isDraw, getGameResult };

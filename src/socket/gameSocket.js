@@ -90,14 +90,16 @@ module.exports = (io) => {
       room.board[cellIndex] = playerSymbol;
 
       // Check win/draw
-      const { winner, draw } = getGameResult(room.board);
+      const { winner, winningLine, draw } = getGameResult(room.board);
 
       if (winner) {
         room.status = 'finished';
         room.winner = winner;
+        room.winningLine = winningLine;
       } else if (draw) {
         room.status = 'finished';
         room.winner = 'Draw';
+        room.winningLine = null;
       } else {
         // Change turn
         room.currentTurn = room.currentTurn === 'X' ? 'O' : 'X';
@@ -111,29 +113,35 @@ module.exports = (io) => {
         board: room.board,
         currentTurn: room.currentTurn,
         winner: room.winner,
+        winningLine: room.winningLine,
         status: room.status,
       });
 
       if (room.status === 'finished') {
-        io.to(roomId).emit('game-over', { winner: room.winner });
+        io.to(roomId).emit('game-over', { winner: room.winner, winningLine: room.winningLine });
       }
     });
 
-    socket.on('restart-game', ({ roomId }) => {
+    socket.on('request-restart', ({ roomId }) => {
       const room = getRoom(roomId);
       if (!room) return sendError('Invalid room');
       
-      // Basic implementation: We can require both players to restart.
-      // For MVP, if one player asks, we just restart it. 
-      // But user requested "require both players to request a restart if cleaner". Let's require both.
-      
+      room.restartRequests.add(playerId);
+      socket.to(roomId).emit('restart-requested', { by: playerId });
+    });
+
+    socket.on('accept-restart', ({ roomId }) => {
+      const room = getRoom(roomId);
+      if (!room) return sendError('Invalid room');
+
       room.restartRequests.add(playerId);
 
+      // If both accepted, reset
       if (room.restartRequests.size === 2 || !room.playerO) {
-        // Reset board
         room.board = Array(9).fill(null);
         room.currentTurn = 'X';
         room.winner = null;
+        room.winningLine = null;
         room.status = 'playing';
         room.restartRequests.clear();
 
@@ -143,9 +151,28 @@ module.exports = (io) => {
           playerX: room.playerX,
           playerO: room.playerO,
         });
-      } else {
-        io.to(roomId).emit('restart-requested', { by: playerId });
       }
+    });
+
+    socket.on('decline-restart', ({ roomId }) => {
+      const room = getRoom(roomId);
+      if (!room) return sendError('Invalid room');
+      
+      room.restartRequests.clear();
+      socket.to(roomId).emit('restart-declined');
+    });
+
+    // WebRTC Signaling Events
+    socket.on('webrtc-offer', ({ roomId, offer }) => {
+      socket.to(roomId).emit('webrtc-offer', offer);
+    });
+
+    socket.on('webrtc-answer', ({ roomId, answer }) => {
+      socket.to(roomId).emit('webrtc-answer', answer);
+    });
+
+    socket.on('webrtc-ice-candidate', ({ roomId, candidate }) => {
+      socket.to(roomId).emit('webrtc-ice-candidate', candidate);
     });
 
     socket.on('leave-room', () => {
