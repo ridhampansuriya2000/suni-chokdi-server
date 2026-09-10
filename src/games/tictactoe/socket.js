@@ -1,5 +1,5 @@
-const { createRoom, getRoom, joinRoom, cleanRoom, handleDisconnect } = require('../game/roomManager');
-const { getGameResult } = require('../game/gameLogic');
+const { createRoom, getRoom, joinRoom, cleanRoom, handleDisconnect } = require('../../core/roomManager');
+const { getGameResult } = require('./logic');
 
 module.exports = (io) => {
   io.on('connection', (socket) => {
@@ -138,6 +138,14 @@ module.exports = (io) => {
 
       // If both accepted, reset
       if (room.restartRequests.size === 2 || !room.playerO) {
+        
+        // Swap starting players so they alternate
+        if (room.playerO) {
+          const temp = room.playerX;
+          room.playerX = room.playerO;
+          room.playerO = temp;
+        }
+
         room.board = Array(9).fill(null);
         room.currentTurn = 'X';
         room.winner = null;

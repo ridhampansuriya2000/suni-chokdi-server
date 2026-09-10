@@ -3,7 +3,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const gameSocket = require('./socket/gameSocket');
+const gameSocket = require('./games/tictactoe/socket');
 
 const app = express();
 const server = http.createServer(app);
