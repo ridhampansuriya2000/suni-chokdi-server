@@ -1,10 +1,23 @@
-const { createRoom, getRoom, joinRoom, cleanRoom, handleDisconnect } = require('../../core/roomManager');
+const { getRoom } = require('../../core/roomManager');
 const { getGameResult } = require('./logic');
 
 module.exports = (io, socket, playerId) => {
   const sendError = (message) => {
     socket.emit('error', { message });
   };
+
+  // When the core 'join-room' handler processes a new join, the core emits 'opponent-joined'
+  // to the room creator. The tictactoe-specific listener here fires game-start for both players.
+  socket.on('ttt-start-game', ({ roomId }) => {
+    const room = getRoom(roomId);
+    if (!room || room.status !== 'playing') return;
+    io.to(roomId).emit('game-start', {
+      board: room.board,
+      currentTurn: room.currentTurn,
+      playerX: room.playerX,
+      playerO: room.playerO,
+    });
+  });
 
   socket.on('make-move', ({ roomId, cellIndex }) => {
     const room = getRoom(roomId);
@@ -41,7 +54,7 @@ module.exports = (io, socket, playerId) => {
       room.currentTurn = room.currentTurn === 'X' ? 'O' : 'X';
     }
 
-    // Clear restart requests upon a new move (if any existed before game finished)
+    // Clear restart requests upon a new move
     room.restartRequests.clear();
 
     // Broadcast state

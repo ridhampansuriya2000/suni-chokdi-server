@@ -34,6 +34,7 @@ module.exports = (io, socket, playerId) => {
     const room = result.room;
     const playerSymbol = room.playerX === playerId ? 'X' : 'O';
 
+    // Tell the joiner their info
     socket.emit('player-joined', {
       roomId,
       player: playerSymbol,
@@ -41,9 +42,29 @@ module.exports = (io, socket, playerId) => {
       gameType: room.gameType
     });
 
-    // We let the specific game sockets handle game-start emission because they have specific state structures.
-    // E.g. TicTacToe needs to send `board`, Bingo needs to just say it's full.
+    // Notify/start based on game type
+    if (!result.reconnected) {
+      if (room.gameType === 'tictactoe') {
+        // For TicTacToe: immediately start the game for both players
+        io.to(roomId).emit('game-start', {
+          board: room.board,
+          currentTurn: room.currentTurn,
+          playerX: room.playerX,
+          playerO: room.playerO,
+        });
+      } else {
+        // For Bingo and future games: just tell creator opponent arrived
+        socket.to(roomId).emit('opponent-joined', {
+          status: room.status,
+          gameType: room.gameType
+        });
+      }
+    } else {
+      // Reconnect: notify opponent they are back
+      socket.to(roomId).emit('player-reconnected');
+    }
   });
+
 
   // WebRTC Signaling Events
   socket.on('webrtc-offer', ({ roomId, offer }) => {
@@ -64,11 +85,16 @@ module.exports = (io, socket, playerId) => {
 
   socket.on('leave-room', () => {
     if (socket.roomId) {
-      socket.leave(socket.roomId);
-      socket.to(socket.roomId).emit('player-disconnected');
+      const leavingRoomId = socket.roomId;
+      socket.leave(leavingRoomId);
+      socket.to(leavingRoomId).emit('player-disconnected', { reason: 'left' });
       socket.roomId = null;
+      // Clean room so it can't be rejoined
+      const { cleanRoom } = require('./roomManager');
+      cleanRoom(leavingRoomId);
     }
   });
+
 
   socket.on('disconnect', () => {
     console.log(`Player disconnected: ${playerId}`);
