@@ -133,4 +133,20 @@ module.exports = (io, socket, playerId) => {
       io.to(roomId).emit('bingo-game-reset');
     }
   });
+
+  socket.on('bingo-request-restart', ({ roomId }) => {
+    const room = getRoom(roomId);
+    if (!room || room.gameType !== 'bingo') return sendError('Invalid room');
+    
+    room.restartRequests.add(playerId);
+    socket.to(roomId).emit('bingo-restart-requested', { by: playerId });
+  });
+
+  socket.on('bingo-decline-restart', ({ roomId }) => {
+    const room = getRoom(roomId);
+    if (!room || room.gameType !== 'bingo') return sendError('Invalid room');
+    
+    room.restartRequests.clear();
+    socket.to(roomId).emit('bingo-restart-declined');
+  });
 };
