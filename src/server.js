@@ -3,7 +3,9 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const gameSocket = require('./games/tictactoe/socket');
+const coreSocket = require('./core/socket');
+const tictactoeSocket = require('./games/tictactoe/socket');
+const bingoSocket = require('./games/bingo/socket');
 
 const app = express();
 const server = http.createServer(app);
@@ -23,7 +25,14 @@ const io = new Server(server, {
 });
 
 // Setup socket logic
-gameSocket(io);
+io.on('connection', (socket) => {
+  const playerId = socket.handshake.query.playerId || socket.id;
+  console.log(`Player connected: ${playerId} (Socket ID: ${socket.id})`);
+
+  coreSocket(io, socket, playerId);
+  tictactoeSocket(io, socket, playerId);
+  bingoSocket(io, socket, playerId);
+});
 
 // Simple root endpoint
 app.get('/', (req, res) => {
