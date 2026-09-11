@@ -6,6 +6,7 @@ const cors = require('cors');
 const coreSocket = require('./core/socket');
 const tictactoeSocket = require('./games/tictactoe/socket');
 const bingoSocket = require('./games/bingo/socket');
+const sosSocket = require('./games/sos/socket');
 
 const app = express();
 const server = http.createServer(app);
@@ -32,6 +33,7 @@ io.on('connection', (socket) => {
   coreSocket(io, socket, playerId);
   tictactoeSocket(io, socket, playerId);
   bingoSocket(io, socket, playerId);
+  sosSocket(io, socket, playerId);
 });
 
 // Simple root endpoint
