@@ -52,6 +52,23 @@ module.exports = (io, socket, playerId) => {
           playerX: room.playerX,
           playerO: room.playerO,
         });
+      } else if (room.gameType === 'sos') {
+        if (!room.sosState) {
+          room.sosState = {
+            board: Array(25).fill(null),
+            scores: { X: 0, O: 0 },
+            currentTurn: 'X',
+            winner: null,
+            status: 'playing'
+          };
+        }
+        io.to(roomId).emit('sos-game-start', {
+          board: room.sosState.board,
+          currentTurn: room.sosState.currentTurn,
+          scores: room.sosState.scores,
+          playerX: room.playerX,
+          playerO: room.playerO,
+        });
       } else {
         // For Bingo and future games: just tell creator opponent arrived
         socket.to(roomId).emit('opponent-joined', {
