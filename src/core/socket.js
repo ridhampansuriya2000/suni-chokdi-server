@@ -39,7 +39,8 @@ module.exports = (io, socket, playerId) => {
       roomId,
       player: playerSymbol,
       status: room.status,
-      gameType: room.gameType
+      gameType: room.gameType,
+      players: room.players
     });
 
     // Notify/start based on game type
@@ -73,7 +74,8 @@ module.exports = (io, socket, playerId) => {
         // For Bingo and future games: just tell creator opponent arrived
         socket.to(roomId).emit('opponent-joined', {
           status: room.status,
-          gameType: room.gameType
+          gameType: room.gameType,
+          players: room.players
         });
       }
     } else {

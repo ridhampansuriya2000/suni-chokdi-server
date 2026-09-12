@@ -12,6 +12,8 @@ const createRoom = (playerId, gameType = 'tictactoe') => {
     gameType,
     playerX: playerId, // Creator is always 'X'
     playerO: null,
+    players: [playerId], // Track all players generically
+    maxPlayers: gameType === 'mindi' ? 4 : 2,
     board: Array(9).fill(null), // Legacy tic-tac-toe default, can be ignored by Bingo
     currentTurn: 'X', // 'X' always starts
     status: 'waiting', // waiting, playing, finished
@@ -33,7 +35,7 @@ const joinRoom = (roomId, playerId) => {
   if (!room) return { error: 'ROOM_NOT_FOUND' };
   
   // Reconnect logic
-  if (room.playerX === playerId || room.playerO === playerId) {
+  if (room.players.includes(playerId)) {
     if (room.disconnectTimeout) {
       clearTimeout(room.disconnectTimeout);
       room.disconnectTimeout = null;
@@ -42,12 +44,18 @@ const joinRoom = (roomId, playerId) => {
   }
 
   // Join as new player
-  if (room.playerX && room.playerO) {
+  if (room.players.length >= room.maxPlayers) {
     return { error: 'ROOM_FULL' };
   }
 
-  room.playerO = playerId;
-  room.status = 'playing';
+  room.players.push(playerId);
+  if (!room.playerO) {
+    room.playerO = playerId; // Legacy assignment for 2-player games
+  }
+
+  if (room.players.length === room.maxPlayers) {
+    room.status = 'playing';
+  }
   return { success: true, room, reconnected: false };
 };
 
