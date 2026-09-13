@@ -5,10 +5,10 @@ module.exports = (io, socket, playerId) => {
     socket.emit('error', { message });
   };
 
-  socket.on('create-room', ({ gameType } = {}) => {
+  socket.on('create-room', ({ gameType, config } = {}) => {
     // default to tictactoe if not specified
     const type = gameType || 'tictactoe';
-    const room = createRoom(playerId, type);
+    const room = createRoom(playerId, type, config);
     socket.join(room.roomId);
     socket.roomId = room.roomId;
 
@@ -16,7 +16,8 @@ module.exports = (io, socket, playerId) => {
       roomId: room.roomId,
       player: 'X',
       status: room.status,
-      gameType: room.gameType
+      gameType: room.gameType,
+      maxPlayers: room.maxPlayers
     });
   });
 
@@ -40,7 +41,8 @@ module.exports = (io, socket, playerId) => {
       player: playerSymbol,
       status: room.status,
       gameType: room.gameType,
-      players: room.players
+      players: room.players,
+      maxPlayers: room.maxPlayers
     });
 
     // Notify/start based on game type
@@ -75,7 +77,8 @@ module.exports = (io, socket, playerId) => {
         socket.to(roomId).emit('opponent-joined', {
           status: room.status,
           gameType: room.gameType,
-          players: room.players
+          players: room.players,
+          maxPlayers: room.maxPlayers
         });
       }
     } else {
