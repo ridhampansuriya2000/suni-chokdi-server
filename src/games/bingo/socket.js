@@ -130,7 +130,10 @@ module.exports = (io, socket, playerId) => {
       };
       room.restartRequests.clear();
 
-      io.to(roomId).emit('bingo-game-reset');
+      io.to(roomId).emit('bingo-game-reset', {
+        playerX: room.playerX,
+        playerO: room.playerO
+      });
     }
   });
 
