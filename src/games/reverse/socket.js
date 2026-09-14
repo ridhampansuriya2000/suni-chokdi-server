@@ -17,6 +17,12 @@ const getPublicStateForPlayer = (state, playerId, roomPlayers) => {
   };
 };
 
+const getPlayerName = (room, pid, seatIndex) => {
+  if (pid && pid.startsWith('bot_')) return `Bot ${seatIndex}`;
+  if (room && room.playerNames && room.playerNames[pid]) return room.playerNames[pid];
+  return `Player ${seatIndex + 1}`;
+};
+
 module.exports = (io, socket, playerId) => {
   const sendError = (message) => {
     if (socket) socket.emit('error', { message });
@@ -114,7 +120,7 @@ module.exports = (io, socket, playerId) => {
     state.discardPile.push(card);
     state.activeColor = card.color !== 'WILD' ? card.color : null;
     
-    state.actionLog.push(`${room.players[playerSeat]} played ${card.color !== 'WILD' ? card.color + ' ' + card.value : card.value}`);
+    state.actionLog.push(`${getPlayerName(room, room.players[playerSeat], playerSeat)} played ${card.color !== 'WILD' ? card.color + ' ' + card.value : card.value}`);
 
     // Check UNO
     if (hand.length === 1) {
@@ -148,7 +154,7 @@ module.exports = (io, socket, playerId) => {
         const nextTarget = getNextTurn(state.currentTurn, room.players.length, state.direction, false);
         const drawn = drawCardsFromDeck(state, 2);
         state.hands[nextTarget].push(...drawn);
-        state.actionLog.push(`${room.players[nextTarget]} drew 2 cards`);
+        state.actionLog.push(`${getPlayerName(room, room.players[nextTarget], nextTarget)} drew 2 cards`);
         skipNext = true;
     }
 
@@ -160,7 +166,7 @@ module.exports = (io, socket, playerId) => {
             const nextTarget = getNextTurn(state.currentTurn, room.players.length, state.direction, false);
             const drawn = drawCardsFromDeck(state, 4);
             state.hands[nextTarget].push(...drawn);
-            state.actionLog.push(`${room.players[nextTarget]} drew 4 cards`);
+            state.actionLog.push(`${getPlayerName(room, room.players[nextTarget], nextTarget)} drew 4 cards`);
             skipNext = true;
         }
     }
@@ -181,7 +187,7 @@ module.exports = (io, socket, playerId) => {
     const drawn = drawCardsFromDeck(state, 1);
     if (drawn.length > 0) {
        state.hands[playerSeat].push(drawn[0]);
-       state.actionLog.push(`${room.players[playerSeat]} drew a card`);
+       state.actionLog.push(`${getPlayerName(room, room.players[playerSeat], playerSeat)} drew a card`);
     }
     
     // In this basic version, drawing a card immediately ends the turn.
@@ -198,7 +204,7 @@ module.exports = (io, socket, playerId) => {
     state.activeColor = color;
     state.status = 'playing';
     state.pendingWildPlayer = null;
-    state.actionLog.push(`${room.players[playerSeat]} chose ${color}`);
+    state.actionLog.push(`${getPlayerName(room, room.players[playerSeat], playerSeat)} chose ${color}`);
 
     // Since skipNext was evaluated when card was played, if it was a Wild Draw Four, the skip is just skipping the next player's turn visually.
     // Wait, the turn progression wasn't completed for Wilds! We must progress it here.
@@ -219,7 +225,7 @@ module.exports = (io, socket, playerId) => {
        if (!state.unoCallers.includes(playerSeat)) {
            state.unoCallers.push(playerSeat);
        }
-       state.actionLog.push(`${room.players[playerSeat]} called UNO!`);
+       state.actionLog.push(`${getPlayerName(room, room.players[playerSeat], playerSeat)} called UNO!`);
        broadcastGameState(roomId, room);
     }
   };
@@ -229,7 +235,7 @@ module.exports = (io, socket, playerId) => {
     if (state.hands[targetSeat].length === 1 && !state.unoCallers.includes(targetSeat)) {
         const drawn = drawCardsFromDeck(state, 2);
         state.hands[targetSeat].push(...drawn);
-        state.actionLog.push(`${room.players[targetSeat]} was caught and drew 2 cards`);
+        state.actionLog.push(`${getPlayerName(room, room.players[targetSeat], targetSeat)} was caught and drew 2 cards`);
         broadcastGameState(roomId, room);
     }
   };
