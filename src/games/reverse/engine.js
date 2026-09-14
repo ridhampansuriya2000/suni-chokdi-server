@@ -52,7 +52,7 @@ const createInitialGameState = (players) => {
     activeColor: null, // RED, YELLOW, GREEN, BLUE
     winner: null,
     scores: {},
-    unoCallers: new Set(),
+    unoCallers: [],
     actionLog: [],
     drawPenalty: 0, // In case rules support stacking in the future, we keep this, but for now we apply immediately
     pendingWildPlayer: null // If a wild is played, this stores who needs to pick a color

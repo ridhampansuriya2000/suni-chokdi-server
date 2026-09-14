@@ -85,7 +85,9 @@ module.exports = (io, socket, playerId) => {
      const state = room.reverseState;
      const playerId = room.players[seatIndex];
      if (playerId && playerId.startsWith('bot_')) {
-        state.unoCallers.add(seatIndex);
+        if (!state.unoCallers.includes(seatIndex)) {
+           state.unoCallers.push(seatIndex);
+        }
         broadcastGameState(roomId, room);
      } else {
         // Human UNO window logic would go here. 
@@ -117,7 +119,7 @@ module.exports = (io, socket, playerId) => {
     // Check UNO
     if (hand.length === 1) {
         // Player must call uno
-        state.unoCallers.delete(playerSeat);
+        state.unoCallers = state.unoCallers.filter(s => s !== playerSeat);
         checkUnoPenalty(roomId, room, playerSeat);
     }
 
@@ -214,7 +216,9 @@ module.exports = (io, socket, playerId) => {
   const internalCallUno = (roomId, room, playerSeat) => {
     const state = room.reverseState;
     if (state.hands[playerSeat].length <= 2) { // Allow calling slightly preemptively
-       state.unoCallers.add(playerSeat);
+       if (!state.unoCallers.includes(playerSeat)) {
+           state.unoCallers.push(playerSeat);
+       }
        state.actionLog.push(`${room.players[playerSeat]} called UNO!`);
        broadcastGameState(roomId, room);
     }
@@ -222,7 +226,7 @@ module.exports = (io, socket, playerId) => {
 
   const internalChallengeUno = (roomId, room, challengerSeat, targetSeat) => {
     const state = room.reverseState;
-    if (state.hands[targetSeat].length === 1 && !state.unoCallers.has(targetSeat)) {
+    if (state.hands[targetSeat].length === 1 && !state.unoCallers.includes(targetSeat)) {
         const drawn = drawCardsFromDeck(state, 2);
         state.hands[targetSeat].push(...drawn);
         state.actionLog.push(`${room.players[targetSeat]} was caught and drew 2 cards`);
