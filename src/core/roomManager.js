@@ -11,6 +11,12 @@ const createRoom = (playerId, gameType = 'tictactoe', config = null) => {
   let maxPlayers = 2;
   if (gameType === 'mindi') {
     maxPlayers = (!config || config.mode === '4_humans') ? 4 : 2;
+  } else if (gameType === 'reverse') {
+    if (config?.mode === 'bots') {
+       maxPlayers = 1; // Only 1 human needed to start the bot game, bots fill the rest
+    } else {
+       maxPlayers = config?.maxPlayers || 4;
+    }
   }
 
   const newRoom = {
