@@ -5,7 +5,7 @@ const { generateId } = require('../utils/generateId');
 const rooms = new Map();
 const DISCONNECT_TIMEOUT_MS = 60000; // 60 seconds timeout before closing a room
 
-const createRoom = (playerId, gameType = 'tictactoe', config = null) => {
+const createRoom = (playerId, gameType = 'tictactoe', config = null, playerName = 'Host') => {
   const roomId = generateId();
   
   let maxPlayers = 2;
@@ -26,6 +26,7 @@ const createRoom = (playerId, gameType = 'tictactoe', config = null) => {
     playerX: playerId, // Creator is always 'X'
     playerO: null,
     players: [playerId], // Track all players generically
+    playerNames: { [playerId]: playerName },
     maxPlayers,
     board: Array(9).fill(null), // Legacy tic-tac-toe default, can be ignored by Bingo
     currentTurn: 'X', // 'X' always starts
@@ -42,7 +43,7 @@ const getRoom = (roomId) => {
   return rooms.get(roomId);
 };
 
-const joinRoom = (roomId, playerId) => {
+const joinRoom = (roomId, playerId, playerName = 'Player') => {
   const room = rooms.get(roomId);
   
   if (!room) return { error: 'ROOM_NOT_FOUND' };
@@ -62,6 +63,7 @@ const joinRoom = (roomId, playerId) => {
   }
 
   room.players.push(playerId);
+  room.playerNames[playerId] = playerName;
   if (!room.playerO) {
     room.playerO = playerId; // Legacy assignment for 2-player games
   }
